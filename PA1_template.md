@@ -1,0 +1,146 @@
+#Peer Graded Assignment: Course Project 1
+
+##Analisys
+
+1. Code for reading in the dataset and/or processing the data
+
+
+```r
+#obtaining the directory where activity.CSV is
+arq <- paste(getwd(),"/Data/activity.CSV",sep="")
+#loading activity.CSV into arq
+activity <- read.csv(arq, stringsAsFactors = FALSE)
+```
+
+2. Histogram of the total number of steps taken each day
+
+
+```r
+#aggregating the number of steps by date
+steps_by_date <- aggregate(steps~date, activity, FUN = sum)
+#generating histogram from number of steps by date
+hist(steps_by_date$steps,main = "Total number of steps taken each day",xlab = "steps")
+```
+
+![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2-1.png)
+
+3. Mean and median number of steps taken each day
+
+
+```r
+#mean
+mean(steps_by_date$steps)
+```
+
+```
+## [1] 10766.19
+```
+
+```r
+#median
+median(steps_by_date$steps)
+```
+
+```
+## [1] 10765
+```
+
+4. Time series plot of the average number of steps taken
+
+
+```r
+#loding funcionalities from ggplot2
+library("ggplot2")
+#calculating mean of steps by interval
+average_steps <- aggregate(steps~interval, activity, FUN = mean,na.rm=TRUE)
+#ploting result through line graph
+ggplot (average_steps,aes(interval,steps))+geom_line()+
+  xlab("Interval") + ylab("mean steps")
+```
+
+![plot of chunk unnamed-chunk-4](figure/unnamed-chunk-4-1.png)
+
+5. The 5-minute interval that, on average, contains the maximum number of steps
+
+
+```r
+#interval with the maximum number of steps
+average_steps$interval[average_steps$steps==max(average_steps$steps)]
+```
+
+```
+## [1] 835
+```
+
+```r
+#number maximum of steps
+max(average_steps$steps)
+```
+
+```
+## [1] 206.1698
+```
+
+6. Code to describe and show a strategy for imputing missing data
+
+
+```r
+#number of steps as NA values 
+NA_vect <- sum(is.na(activity$steps))
+NA_vect
+```
+
+```
+## [1] 2304
+```
+
+```r
+#creating a new dataframe: activity_full
+activity_full <- activity
+#filling the NA values with the mean of each interval
+activity_full$steps[is.na(activity_full$steps)] <- average_steps$steps[activity_full$interval]
+```
+
+```
+## Warning in activity_full$steps[is.na(activity_full$steps)] <- average_steps
+## $steps[activity_full$interval]: number of items to replace is not a
+## multiple of replacement length
+```
+
+7. Histogram of the total number of steps taken each day after missing values are imputed
+
+
+```r
+#aggregating the number of steps by date with no NA values
+steps_by_date_no_NA <- aggregate(steps~date, activity_full, FUN = sum)
+#histogram generate from dataframe whitout NA values - number of steps by date
+hist(steps_by_date_no_NA$steps,main = "Total number of steps taken each day",xlab = "steps")
+```
+
+![plot of chunk unnamed-chunk-7](figure/unnamed-chunk-7-1.png)
+
+As result of imputing NA values, we can see clearly we have the most part of NA values at the first intervals. From the medium to the ending the values are similar. The analisys take as base the first and second histograms.
+
+8. Panel plot comparing the average number of steps taken per 5-minute interval across weekdays and weekends
+
+
+```r
+#converting date type to date type
+activity_full$date <- strptime(activity_full$date,"%Y-%m-%d")
+#creating a new attibute in activity_full loading a day week name
+activity_full$weekdays <- weekdays(activity_full$date)
+#attibuiting "weekend" for Sunday and Saturday
+activity_full$weekdays [activity_full$weekdays %in% c("Sunday","Saturday")] <- "weekend"
+#creating a operator nin that is negation of in
+`%nin%` = Negate(`%in%`)
+#attibuiting "weekday" for days different from Sunday or Saturday
+activity_full$weekdays [activity_full$weekdays %nin% c("weekend")] <- "weekday"
+#mean of steps in a table whitout NA values
+average_steps_noNA <- aggregate(steps~interval+weekdays, activity_full, FUN = mean,na.rm=TRUE)
+#generating plot shared by weekdays
+ggplot(average_steps_noNA,aes(interval,steps))+geom_line()+facet_grid(.~weekdays)
+```
+
+![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8-1.png)
+
+End of analisys.
